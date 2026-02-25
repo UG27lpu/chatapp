@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Simple Chat UI</title>
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f4f4;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        .chat-container {
+            width: 400px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .chat-header {
+            background: #4caf50;
+            color: white;
+            padding: 15px;
+            font-size: 18px;
+            text-align: center;
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: 10px;
+            overflow-y: auto;
+            height: 300px;
+        }
+
+        .message {
+            margin: 8px 0;
+            padding: 8px 12px;
+            border-radius: 8px;
+            max-width: 70%;
+            font-size: 14px;
+        }
+
+        .sent {
+            background: #dcf8c6;
+            align-self: flex-end;
+        }
+
+        .received {
+            background: #eee;
+            align-self: flex-start;
+        }
+
+        .chat-input {
+            display: flex;
+            border-top: 1px solid #ddd;
+        }
+
+        .chat-input input {
+            flex: 1;
+            border: none;
+            padding: 10px;
+            font-size: 14px;
+            outline: none;
+        }
+
+        .chat-input button {
+            background: #4caf50;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            cursor: pointer;
+        }
+
+        .chat-input button:hover {
+            background: #45a049;
+        }
+
+        .user-setup {
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .user-setup input {
+            width: 48%;
+            padding: 6px;
+            margin-right: 2%;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="chat-container">
+        <div class="chat-header">Simple Chat</div>
+
+        <div class="user-setup">
+            <input type="text" id="sender" placeholder="Sender ID" />
+            <input type="text" id="receiver" placeholder="Receiver ID" />
+            <button onclick="connectSocket()">Connect</button>
+        </div>
+
+        <div class="chat-messages" id="messages"></div>
+
+        <div class="chat-input">
+            <input type="text" id="messageInput" placeholder="Type a message..." />
+            <button onclick="sendMessage()">Send</button>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = "http://localhost:5001/api/chat/send";
+        const SOCKET_URL = "http://localhost:5001";
+
+        let socket;
+
+        function connectSocket() {
+            const sender = document.getElementById("sender").value;
+
+            socket = io(SOCKET_URL);
+
+            socket.on("connect", () => {
+                socket.emit("join", sender);
+                alert("Connected to realtime chat");
+            });
+
+            socket.on("new_message", (data) => {
+                addMessage(data.message, "received");
+            });
+        }
+
+        async function sendMessage() {
+            const sender = document.getElementById("sender").value;
+            const receiver = document.getElementById("receiver").value;
+            const message = document.getElementById("messageInput").value;
+
+            if (!message) return;
+
+            try {
+                const res = await fetch(API_URL, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ sender, receiver, message }),
+                });
+
+                const data = await res.json();
+
+                if (res.ok && data.sender) {
+                    addMessage(data.message, "sent");
+                    document.getElementById("messageInput").value = "";
+                } else {
+                    console.error("Failed to send message:", data);
+                    alert("Error: " + (data.message || "Failed to send message. Check console for details."));
+                }
+            } catch (error) {
+                console.error("Network error:", error);
+                alert("Network error. Is the server running?");
+            }
+        }
+
+        function addMessage(text, type) {
+            const msgDiv = document.createElement("div");
+            msgDiv.className = `message ${type}`;
+            msgDiv.innerText = text;
+
+            document.getElementById("messages").appendChild(msgDiv);
+            document.getElementById("messages").scrollTop = 9999;
+        }
+    </script>
+</body>
+
+</html>
