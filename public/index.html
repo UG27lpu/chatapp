@@ -4,176 +4,447 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Simple Chat UI</title>
+    <title>Catppuccin Chat UI</title>
     <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
     <style>
+        /* Catppuccin Macchiato Palette */
+        :root {
+            --ctp-base: #24273a;
+            --ctp-mantle: #1e2030;
+            --ctp-crust: #181926;
+            --ctp-text: #cad3f5;
+            --ctp-subtext1: #b8c0e0;
+            --ctp-subtext0: #a5adcb;
+            --ctp-surface2: #5b6078;
+            --ctp-surface1: #494d64;
+            --ctp-surface0: #363a4f;
+            --ctp-overlay2: #939ab7;
+            --ctp-overlay1: #8087a2;
+            --ctp-overlay0: #6e738d;
+            --ctp-blue: #8aadf4;
+            --ctp-lavender: #b7bdf8;
+            --ctp-sapphire: #7dc4e4;
+            --ctp-sky: #91d7e3;
+            --ctp-teal: #8bd5ca;
+            --ctp-green: #a6da95;
+            --ctp-yellow: #eed49f;
+            --ctp-peach: #f5a97f;
+            --ctp-maroon: #ee99a0;
+            --ctp-red: #ed8796;
+            --ctp-mauve: #c6a0f6;
+            --ctp-pink: #f5bde6;
+            --ctp-flamingo: #f0c6c6;
+            --ctp-rosewater: #f4dbd6;
+        }
+
         body {
-            font-family: Arial, sans-serif;
-            background: #f4f4f4;
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background: var(--ctp-crust);
+            color: var(--ctp-text);
             display: flex;
-            justify-content: center;
+            flex-direction: column;
             align-items: center;
             height: 100vh;
             margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
         }
 
-        .chat-container {
-            width: 400px;
-            background: white;
-            border-radius: 10px;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        .header-container {
+            width: 100%;
+            max-width: 900px;
+            background: var(--ctp-mantle);
+            border-radius: 12px;
+            padding: 15px 20px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            border: 1px solid var(--ctp-surface0);
+        }
+
+        .header-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--ctp-mauve);
+        }
+
+        .ids-setup {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .ids-setup input {
+            background: var(--ctp-base);
+            border: 1px solid var(--ctp-surface1);
+            color: var(--ctp-text);
+            padding: 8px 12px;
+            border-radius: 6px;
+            outline: none;
+            width: 220px;
+            font-size: 0.9rem;
+            transition: border-color 0.2s;
+        }
+
+        .ids-setup input:focus {
+            border-color: var(--ctp-mauve);
+        }
+
+        .ids-setup button {
+            background: var(--ctp-mauve);
+            color: var(--ctp-crust);
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .ids-setup button:hover {
+            background: var(--ctp-pink);
+            transform: translateY(-1px);
+        }
+
+        .ids-setup button:active {
+            transform: translateY(0);
+        }
+
+        .main-container {
+            display: flex;
+            gap: 30px;
+            width: 100%;
+            max-width: 1000px;
+            flex: 1;
+            min-height: 0; /* Important for flex child scrolling */
+        }
+
+        .chat-window {
+            flex: 1;
+            background: var(--ctp-base);
+            border-radius: 12px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
             display: flex;
             flex-direction: column;
             overflow: hidden;
+            border: 1px solid var(--ctp-surface0);
         }
 
         .chat-header {
-            background: #4caf50;
-            color: white;
-            padding: 15px;
-            font-size: 18px;
+            background: var(--ctp-surface0);
+            padding: 12px 20px;
+            font-size: 1rem;
+            font-weight: 600;
             text-align: center;
+            border-bottom: 1px solid var(--ctp-surface1);
+        }
+
+        .chat1-header {
+            color: var(--ctp-blue);
+        }
+
+        .chat2-header {
+            color: var(--ctp-green);
         }
 
         .chat-messages {
             flex: 1;
-            padding: 10px;
+            padding: 20px;
             overflow-y: auto;
-            height: 300px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            background: var(--ctp-base);
         }
 
         .message {
-            margin: 8px 0;
-            padding: 8px 12px;
-            border-radius: 8px;
-            max-width: 70%;
-            font-size: 14px;
+            padding: 10px 14px;
+            border-radius: 12px;
+            max-width: 75%;
+            font-size: 0.95rem;
+            line-height: 1.4;
+            word-wrap: break-word;
+            position: relative;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         .sent {
-            background: #dcf8c6;
+            background: var(--ctp-surface2);
+            color: var(--ctp-text);
             align-self: flex-end;
+            border-bottom-right-radius: 4px;
         }
 
         .received {
-            background: #eee;
+            background: var(--ctp-surface0);
+            color: var(--ctp-text);
             align-self: flex-start;
+            border-bottom-left-radius: 4px;
         }
 
-        .chat-input {
+        /* Specific colors for specific views to make it clear */
+        .chat1-sent { background: var(--ctp-blue); color: var(--ctp-crust); }
+        .chat2-sent { background: var(--ctp-green); color: var(--ctp-crust); }
+
+        .chat-input-area {
             display: flex;
-            border-top: 1px solid #ddd;
+            padding: 15px;
+            background: var(--ctp-mantle);
+            border-top: 1px solid var(--ctp-surface0);
+            gap: 10px;
         }
 
-        .chat-input input {
+        .chat-input-area input {
             flex: 1;
-            border: none;
-            padding: 10px;
-            font-size: 14px;
+            background: var(--ctp-surface0);
+            border: 1px solid var(--ctp-surface1);
+            color: var(--ctp-text);
+            padding: 12px 15px;
+            border-radius: 8px;
+            font-size: 0.95rem;
             outline: none;
+            transition: border-color 0.2s;
         }
 
-        .chat-input button {
-            background: #4caf50;
-            color: white;
+        .chat-input-area input:focus {
+            border-color: var(--ctp-overlay1);
+        }
+
+        .chat-input-area button {
             border: none;
-            padding: 10px 15px;
+            padding: 0 20px;
+            border-radius: 8px;
+            font-weight: 600;
             cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
-        .chat-input button:hover {
-            background: #45a049;
+        .chat1-btn {
+            background: var(--ctp-blue);
+            color: var(--ctp-crust);
         }
 
-        .user-setup {
-            padding: 10px;
-            border-bottom: 1px solid #ddd;
+        .chat1-btn:hover { background: #9bc0fc; transform: translateY(-1px); }
+
+        .chat2-btn {
+            background: var(--ctp-green);
+            color: var(--ctp-crust);
         }
 
-        .user-setup input {
-            width: 48%;
-            padding: 6px;
-            margin-right: 2%;
+        .chat2-btn:hover { background: #b6eab5; transform: translateY(-1px); }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: var(--ctp-base);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--ctp-surface1);
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--ctp-surface2);
+        }
+
+        .status-indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--ctp-overlay0);
+            display: inline-block;
+            margin-right: 8px;
+            transition: background 0.3s;
+        }
+
+        .status-connected {
+            background: var(--ctp-green);
+            box-shadow: 0 0 8px var(--ctp-green);
         }
     </style>
 </head>
 
 <body>
-    <div class="chat-container">
-        <div class="chat-header">Simple Chat</div>
-
-        <div class="user-setup">
-            <input type="text" id="sender" placeholder="Sender ID" />
-            <input type="text" id="receiver" placeholder="Receiver ID" />
-            <button onclick="connectSocket()">Connect</button>
+    <!-- Top Configuration Header -->
+    <div class="header-container">
+        <div class="header-title">
+            <span class="status-indicator" id="globalStatus"></span>
+            Dual Chat Configuration
         </div>
-
-        <div class="chat-messages" id="messages"></div>
-
-        <div class="chat-input">
-            <input type="text" id="messageInput" placeholder="Type a message..." />
-            <button onclick="sendMessage()">Send</button>
+        <div class="ids-setup">
+            <input type="text" id="user1Id" placeholder="User 1 ID (Alice)" value="699f2fc1a614a087d123e815" />
+            <span style="color: var(--ctp-overlay0)">⇄</span>
+            <input type="text" id="user2Id" placeholder="User 2 ID (Bob)" value="699f2fc1a614a087d123e816" />
+            <button onclick="connectSockets()" id="connectBtn">Connect Sockets</button>
         </div>
     </div>
 
+    <!-- Main Dual Chat Area -->
+    <div class="main-container">
+
+        <!-- Chat Window 1 (User 1 Perspective) -->
+        <div class="chat-window">
+            <div class="chat-header chat1-header">User 1 (Sender) Perspective</div>
+            <div class="chat-messages" id="messages1">
+                <!-- Messages go here -->
+                <div style="text-align: center; color: var(--ctp-overlay0); margin-top: auto; margin-bottom: auto; font-size: 0.9rem;">
+                    Messages will appear here once connected.
+                </div>
+            </div>
+            <div class="chat-input-area">
+                <input type="text" id="input1" placeholder="Type a message as User 1..." onkeypress="handleKeyPress(event, 1)" disabled />
+                <button class="chat1-btn" onclick="sendMessage(1)" id="btn1" disabled>Send</button>
+            </div>
+        </div>
+
+        <!-- Chat Window 2 (User 2 Perspective) -->
+        <div class="chat-window">
+            <div class="chat-header chat2-header">User 2 (Receiver) Perspective</div>
+            <div class="chat-messages" id="messages2">
+                <!-- Messages go here -->
+                <div style="text-align: center; color: var(--ctp-overlay0); margin-top: auto; margin-bottom: auto; font-size: 0.9rem;">
+                    Messages will appear here once connected.
+                </div>
+            </div>
+            <div class="chat-input-area">
+                <input type="text" id="input2" placeholder="Type a message as User 2..." onkeypress="handleKeyPress(event, 2)" disabled />
+                <button class="chat2-btn" onclick="sendMessage(2)" id="btn2" disabled>Send</button>
+            </div>
+        </div>
+
+    </div>
+
     <script>
-        // Use dynamic origin to work on Vercel as well as localhost
         const API_URL = `${window.location.origin}/api/chat/send`;
         const SOCKET_URL = window.location.origin;
 
-        let socket;
+        let socket1, socket2;
+        let isConnected = false;
 
-        function connectSocket() {
-            const sender = document.getElementById("sender").value;
+        function connectSockets() {
+            const user1Id = document.getElementById("user1Id").value.trim();
+            const user2Id = document.getElementById("user2Id").value.trim();
 
-            socket = io(SOCKET_URL);
+            if (!user1Id || !user2Id) {
+                alert("Please provide both User IDs");
+                return;
+            }
 
-            socket.on("connect", () => {
-                socket.emit("join", sender);
-                alert("Connected to realtime chat");
+            // Disconnect existing if any
+            if (socket1) socket1.disconnect();
+            if (socket2) socket2.disconnect();
+
+            // Clear chat boxes
+            document.getElementById("messages1").innerHTML = "";
+            document.getElementById("messages2").innerHTML = "";
+
+            // Connect User 1
+            socket1 = io(SOCKET_URL);
+            socket1.on("connect", () => {
+                socket1.emit("join", user1Id);
+                checkConnectionStatus();
+            });
+            socket1.on("new_message", (data) => {
+                addMessageToChat(1, data.message, "received");
             });
 
-            socket.on("new_message", (data) => {
-                addMessage(data.message, "received");
+            // Connect User 2
+            socket2 = io(SOCKET_URL);
+            socket2.on("connect", () => {
+                socket2.emit("join", user2Id);
+                checkConnectionStatus();
+            });
+            socket2.on("new_message", (data) => {
+                addMessageToChat(2, data.message, "received");
             });
         }
 
-        async function sendMessage() {
-            const sender = document.getElementById("sender").value;
-            const receiver = document.getElementById("receiver").value;
-            const message = document.getElementById("messageInput").value;
+        function checkConnectionStatus() {
+            if (socket1 && socket1.connected && socket2 && socket2.connected) {
+                isConnected = true;
+                document.getElementById("globalStatus").classList.add("status-connected");
+                document.getElementById("connectBtn").innerText = "Re-connect";
+
+                // Enable inputs
+                document.getElementById("input1").disabled = false;
+                document.getElementById("btn1").disabled = false;
+                document.getElementById("input2").disabled = false;
+                document.getElementById("btn2").disabled = false;
+            }
+        }
+
+        async function sendMessage(fromUserNumber) {
+            if (!isConnected) return;
+
+            const user1Id = document.getElementById("user1Id").value;
+            const user2Id = document.getElementById("user2Id").value;
+
+            // Determine sender and receiver based on who is sending
+            const senderId = fromUserNumber === 1 ? user1Id : user2Id;
+            const receiverId = fromUserNumber === 1 ? user2Id : user1Id;
+
+            const inputField = document.getElementById(`input${fromUserNumber}`);
+            const message = inputField.value.trim();
 
             if (!message) return;
+
+            // Optimistically add to the sender's own chat window
+            addMessageToChat(fromUserNumber, message, fromUserNumber === 1 ? "chat1-sent" : "chat2-sent");
+            inputField.value = "";
 
             try {
                 const res = await fetch(API_URL, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ sender, receiver, message }),
+                    body: JSON.stringify({ sender: senderId, receiver: receiverId, message }),
                 });
 
                 const data = await res.json();
 
-                if (res.ok && data.sender) {
-                    addMessage(data.message, "sent");
-                    document.getElementById("messageInput").value = "";
-                } else {
-                    console.error("Failed to send message:", data);
-                    alert("Error: " + (data.message || "Failed to send message. Check console for details."));
+                if (!res.ok) {
+                    console.error("Failed to send:", data);
+                    addMessageToChat(fromUserNumber, "❌ Failed to send", "received");
                 }
             } catch (error) {
                 console.error("Network error:", error);
-                alert("Network error. Is the server running?");
+                addMessageToChat(fromUserNumber, "❌ Network error", "received");
             }
         }
 
-        function addMessage(text, type) {
+        function handleKeyPress(e, userNum) {
+            if (e.key === 'Enter') {
+                sendMessage(userNum);
+            }
+        }
+
+        function addMessageToChat(chatNumber, text, type) {
+            const messagesContainer = document.getElementById(`messages${chatNumber}`);
+
             const msgDiv = document.createElement("div");
-            msgDiv.className = `message ${type}`;
+
+            // Map generic 'received' to the neutral styling
+            if (type === "received") {
+                msgDiv.className = "message received";
+            } else {
+                // It's a sent message (type provides the specific class like chat1-sent)
+                msgDiv.className = `message ${type} sent`;
+            }
+
             msgDiv.innerText = text;
 
-            document.getElementById("messages").appendChild(msgDiv);
-            document.getElementById("messages").scrollTop = 9999;
+            messagesContainer.appendChild(msgDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
         }
     </script>
 </body>
