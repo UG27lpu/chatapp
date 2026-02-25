@@ -22,8 +22,12 @@ app.use(morgan("dev"));
 // routes
 app.use("/api/chat", chatRoutes);
 
-// health
-app.get("/", (req, res) => res.send("Chat API Running"));
+const path = require("path");
+
+// health / serve UI
+app.get("/", (req, res) => {
+    res.sendFile(path.join(__dirname, "public", "index.html"));
+});
 
 // error middleware
 app.use(errorMiddleware);
@@ -32,6 +36,3 @@ app.use(errorMiddleware);
 connectDB();
 const PORT = process.env.PORT || 5001;
 server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
-
-
-

@@ -117,8 +117,9 @@
     </div>
 
     <script>
-        const API_URL = "http://localhost:5001/api/chat/send";
-        const SOCKET_URL = "http://localhost:5001";
+        // Use dynamic origin to work on Vercel as well as localhost
+        const API_URL = `${window.location.origin}/api/chat/send`;
+        const SOCKET_URL = window.location.origin;
 
         let socket;
 
